@@ -37,16 +37,50 @@ def check_winner(): # Check if there is a winner
 
     return None
 
+def alpha_beta_pruning(row, col, depth, maximizing_player, alpha, beta):
+    if depth == 0 or row >= GRID_SIZE or col >= GRID_SIZE:
+        return evaluate_move(row, col, AI_CELL) - evaluate_move(row, col, PLAYER_CELL)
+
+    if maximizing_player:
+        max_eval = float("-inf")
+        for r in range(row, row + 4):
+            for c in range(col, col + 4):
+                if is_valid_move(r, c):
+                    grid[r][c] = AI_CELL
+                    eval = alpha_beta_pruning(r, c, depth - 1, False, alpha, beta)
+                    grid[r][c] = EMPTY_CELL
+                    max_eval = max(max_eval, eval)
+                    alpha = max(alpha, eval)
+                    if beta <= alpha:
+                        break
+        return max_eval
+    else:
+        min_eval = float("inf")
+        for r in range(row, row + 4):
+            for c in range(col, col + 4):
+                if is_valid_move(r, c):
+                    grid[r][c] = PLAYER_CELL
+                    eval = alpha_beta_pruning(r, c, depth - 1, True, alpha, beta)
+                    grid[r][c] = EMPTY_CELL
+                    min_eval = min(min_eval, eval)
+                    beta = min(beta, eval)
+                    if beta <= alpha:
+                        break
+        return min_eval
+
 def ai_make_move():
     # AI's move (intelligent placement)
     best_move = None
-    best_score = -1
+    best_score = float("-inf")
+    depth = 4  # Adjust the depth of the search based on performance and desired difficulty
 
     for row in range(GRID_SIZE):
         for col in range(GRID_SIZE):
             if is_valid_move(row, col):
-                score = evaluate_move(row, col, AI_CELL)
-                score += evaluate_move(row, col, PLAYER_CELL, blocking=True)
+                grid[row][col] = AI_CELL
+                score = alpha_beta_pruning(row, col, depth - 1, False, float("-inf"), float("inf"))
+                grid[row][col] = EMPTY_CELL
+
                 if score > best_score:
                     best_move = (row, col)
                     best_score = score
